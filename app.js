@@ -26,9 +26,9 @@ app.post("/login", (req, res) => {
 
     results.forEach((Element) => {
       if (Element.user == user && Element.password == password) {
-        const tokenUser = Element.username;
+        const tokenUser = Element;
         console.log(tokenUser);
-        jwt.sign({ username: tokenUser }, "secretkey", (err, token) => {
+        jwt.sign({ user: tokenUser }, "secretkey", (err, token) => {
           res.json({ token });
           console.log(jwt.decode(token));
         });
@@ -83,6 +83,72 @@ app.post("/register", (req, res) => {
     }
   );
 });
+
+app.get("/comments", (req, res) => {
+  connection.query("SELECT * FROM comments inner join users on comments.id_user = users.id inner join forum on comments.id_forum = forum.id", (err, results) => {
+    if (err) {
+      console.log("hay un error ", err);
+      res.json({
+        error: `Hubo un error: ${err}`,
+      });
+      return;
+    }
+    res.json(results);
+    })
+}) 
+
+app.post("/insertcomments", (req, res) => {
+
+  const { id_user, id_forum, comment} = req.body;
+  
+  connection.query("INSERT INTO comments SET ?",{ id_user, id_forum, comment }, (err, results) => {
+    if (err) {
+      console.log("hay un error ", err);
+      res.json({
+        error: `Hubo un error: ${err}`,
+      });
+      return;
+    }
+    res.json({ mensaje: "Usuario insertado" });
+    console.log(results);
+    })
+})
+
+app.get("/forum/:id", (req, res) => {
+
+  const { id } = req.params;
+
+  connection.query(`SELECT * FROM forum inner join comments on forum.id = comments.id_forum inner join users on comments.id_user = users.id where forum.id = ${ id } order by comments.id_comment asc`, (err, results) => {
+    if (err) {
+      console.log("hay un error ", err);
+      res.json({
+        error: `Hubo un error: ${err}`,
+      });
+      return;
+    }
+      
+      res.json(results);
+    
+    })
+}) 
+
+app.get("/forum2", (req, res) => {
+
+  const { id } = req.params;
+
+  connection.query(`SELECT * FROM forum`, (err, results) => {
+    if (err) {
+      console.log("hay un error ", err);
+      res.json({
+        error: `Hubo un error: ${err}`,
+      });
+      return;
+    }
+      
+      res.json(results);
+    
+    })
+})
 
 app.listen(3000, () => {
   console.log("Server corriendo en http://localhost:3000");
